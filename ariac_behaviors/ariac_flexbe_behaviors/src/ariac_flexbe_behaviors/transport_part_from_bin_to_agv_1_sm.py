@@ -11,6 +11,7 @@ from flexbe_core import Behavior, Autonomy, OperatableStateMachine, ConcurrencyC
 from ariac_flexbe_states.start_assignment_state import StartAssignment
 from ariac_flexbe_states.end_assignment_state import EndAssignment
 from ariac_flexbe_behaviors.transport_part_form_bin_to_agv_state_sm import transport_part_form_bin_to_agv_stateSM
+from flexbe_manipulation_states.srdf_state_to_moveit import SrdfStateToMoveit
 # Additional imports can be added inside the following tags
 # [MANUAL_IMPORT]
 
@@ -46,7 +47,7 @@ class transport_part_from_bin_to_agv_1SM(Behavior):
 
 
 	def create(self):
-		# x:649 y:50, x:296 y:171
+		# x:845 y:63, x:296 y:171
 		_state_machine = OperatableStateMachine(outcomes=['finished', 'failed'])
 		_state_machine.userdata.agv_id = 'agv1'
 		_state_machine.userdata.part_type = 'gear_part'
@@ -68,7 +69,7 @@ class transport_part_from_bin_to_agv_1SM(Behavior):
 			# x:445 y:45
 			OperatableStateMachine.add('EndAssignment',
 										EndAssignment(),
-										transitions={'continue': 'finished'},
+										transitions={'continue': 'bin1'},
 										autonomy={'continue': Autonomy.Off})
 
 			# x:188 y:44
@@ -77,6 +78,13 @@ class transport_part_from_bin_to_agv_1SM(Behavior):
 										transitions={'finished': 'EndAssignment', 'failed': 'failed'},
 										autonomy={'finished': Autonomy.Inherit, 'failed': Autonomy.Inherit},
 										remapping={'part_type': 'part_type', 'agv_id': 'agv_id', 'pose_on_agv': 'pose_on_agv'})
+
+			# x:623 y:146
+			OperatableStateMachine.add('bin1',
+										SrdfStateToMoveit(config_name='R1BinPre', move_group="pick1_group", action_topic='/move_group', robot_name=""),
+										transitions={'reached': 'finished', 'planning_failed': 'failed', 'control_failed': 'failed', 'param_error': 'failed'},
+										autonomy={'reached': Autonomy.Off, 'planning_failed': Autonomy.Off, 'control_failed': Autonomy.Off, 'param_error': Autonomy.Off},
+										remapping={'config_name': 'config_name', 'move_group': 'move_group', 'robot_name': 'robot_name', 'action_topic': 'action_topic', 'joint_values': 'joint_values', 'joint_names': 'joint_names'})
 
 
 		return _state_machine
