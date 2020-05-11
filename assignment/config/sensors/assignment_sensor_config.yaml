@@ -2,7 +2,22 @@ sensors:
   break_beam_1:
     type: break_beam
     pose:
-      xyz: [1.6, 2.25, 0.91]
+      xyz: [1.6, 1.533, 0.91]
       rpy: [0, 0, 'pi']
+  break_beam_2:
+    type: break_beam
+    pose:
+      xyz: [1.6, -1.533, 0.91]
+      rpy: [0, 0, 'pi']
+  logical_camera_1:
+    type: logical_camera
+    pose:
+      xyz: [1.2, 1.533, 1.6]
+      rpy: [3.1413, 1.5676, 1.5676]
+  logical_camera_2:
+    type: logical_camera
+    pose:
+      xyz: [1.2, -1.533, 1.6]
+      rpy: [3.1413, 1.5676, 1.5676]
 
 
