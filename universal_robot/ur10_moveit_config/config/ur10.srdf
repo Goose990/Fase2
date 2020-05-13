@@ -109,7 +109,7 @@
     </group_state>
     <group_state name="R2Bin4Pre" group="manipulator">
         <joint name="elbow_joint" value="2" />
-        <joint name="linear_arm_actuator_joint" value="-.7" />
+        <joint name="linear_arm_actuator_joint" value="0.7" />
         <joint name="shoulder_lift_joint" value="-1" />
         <joint name="shoulder_pan_joint" value="3.2" />
         <joint name="wrist_1_joint" value="3.75" />
