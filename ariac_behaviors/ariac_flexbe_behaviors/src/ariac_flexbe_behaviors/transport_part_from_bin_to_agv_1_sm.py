@@ -11,7 +11,7 @@ from flexbe_core import Behavior, Autonomy, OperatableStateMachine, ConcurrencyC
 from ariac_flexbe_states.start_assignment_state import StartAssignment
 from ariac_flexbe_states.end_assignment_state import EndAssignment
 from ariac_flexbe_behaviors.transport_part_form_bin_to_agv_state_sm import transport_part_form_bin_to_agv_stateSM
-from flexbe_manipulation_states.srdf_state_to_moveit import SrdfStateToMoveit
+from ariac_flexbe_behaviors.arm_selector_sm import arm_selectorSM
 # Additional imports can be added inside the following tags
 # [MANUAL_IMPORT]
 
@@ -20,7 +20,7 @@ from flexbe_manipulation_states.srdf_state_to_moveit import SrdfStateToMoveit
 
 '''
 Created on Wed Apr 22 2020
-@author: Gerard Harkema
+@author: Gino en Leon
 '''
 class transport_part_from_bin_to_agv_1SM(Behavior):
 	'''
@@ -36,6 +36,7 @@ class transport_part_from_bin_to_agv_1SM(Behavior):
 
 		# references to used behaviors
 		self.add_behavior(transport_part_form_bin_to_agv_stateSM, 'transport_part_form_bin_to_agv_state')
+		self.add_behavior(arm_selectorSM, 'arm_selector')
 
 		# Additional initialization code can be added inside the following tags
 		# [MANUAL_INIT]
@@ -47,11 +48,21 @@ class transport_part_from_bin_to_agv_1SM(Behavior):
 
 
 	def create(self):
-		# x:845 y:63, x:296 y:171
+		# x:845 y:63, x:414 y:193
 		_state_machine = OperatableStateMachine(outcomes=['finished', 'failed'])
 		_state_machine.userdata.agv_id = 'agv1'
 		_state_machine.userdata.part_type = 'gear_part'
 		_state_machine.userdata.pose_on_agv = []
+		_state_machine.userdata.joint_values = []
+		_state_machine.userdata.joint_names = []
+		_state_machine.userdata.move_group = 'manipulator'
+		_state_machine.userdata.config_name_home = 'home'
+		_state_machine.userdata.action_topic = '/move_group'
+		_state_machine.userdata.robot_name = ''
+		_state_machine.userdata.tool_link = 'ee_link'
+		_state_machine.userdata.config_name_R2Bin4Pre = 'R2Bin4Pre'
+		_state_machine.userdata.arm_id = 'arm1'
+		_state_machine.userdata.move_group_prefix = '/ariac/arm1'
 
 		# Additional creation code can be added inside the following tags
 		# [MANUAL_CREATE]
@@ -63,28 +74,28 @@ class transport_part_from_bin_to_agv_1SM(Behavior):
 			# x:52 y:43
 			OperatableStateMachine.add('StartAssignment',
 										StartAssignment(),
-										transitions={'continue': 'transport_part_form_bin_to_agv_state'},
+										transitions={'continue': 'arm_selector'},
 										autonomy={'continue': Autonomy.Off})
 
-			# x:445 y:45
+			# x:625 y:49
 			OperatableStateMachine.add('EndAssignment',
 										EndAssignment(),
-										transitions={'continue': 'bin1'},
+										transitions={'continue': 'finished'},
 										autonomy={'continue': Autonomy.Off})
 
-			# x:188 y:44
+			# x:326 y:46
 			OperatableStateMachine.add('transport_part_form_bin_to_agv_state',
 										self.use_behavior(transport_part_form_bin_to_agv_stateSM, 'transport_part_form_bin_to_agv_state'),
 										transitions={'finished': 'EndAssignment', 'failed': 'failed'},
 										autonomy={'finished': Autonomy.Inherit, 'failed': Autonomy.Inherit},
-										remapping={'part_type': 'part_type', 'agv_id': 'agv_id', 'pose_on_agv': 'pose_on_agv'})
+										remapping={'part_type': 'part_type', 'agv_id': 'agv_id', 'pose_on_agv': 'pose_on_agv', 'move_group_prefix': 'move_group_prefix'})
 
-			# x:623 y:146
-			OperatableStateMachine.add('bin1',
-										SrdfStateToMoveit(config_name='R1BinPre', move_group="pick1_group", action_topic='/move_group', robot_name=""),
-										transitions={'reached': 'finished', 'planning_failed': 'failed', 'control_failed': 'failed', 'param_error': 'failed'},
-										autonomy={'reached': Autonomy.Off, 'planning_failed': Autonomy.Off, 'control_failed': Autonomy.Off, 'param_error': Autonomy.Off},
-										remapping={'config_name': 'config_name', 'move_group': 'move_group', 'robot_name': 'robot_name', 'action_topic': 'action_topic', 'joint_values': 'joint_values', 'joint_names': 'joint_names'})
+			# x:177 y:125
+			OperatableStateMachine.add('arm_selector',
+										self.use_behavior(arm_selectorSM, 'arm_selector'),
+										transitions={'finished': 'transport_part_form_bin_to_agv_state', 'failed': 'failed'},
+										autonomy={'finished': Autonomy.Inherit, 'failed': Autonomy.Inherit},
+										remapping={'arm_id': 'arm_id', 'move_group_prefix': 'move_group_prefix'})
 
 
 		return _state_machine

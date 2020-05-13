@@ -4,7 +4,7 @@
 
 	<executable package_path="ariac_flexbe_behaviors.transport_part_from_bin_to_agv_1_sm" class="transport_part_from_bin_to_agv_1SM" />
 	<tagstring>ariac</tagstring>
-	<author>Gerard Harkema</author>
+	<author>Gino en Leon</author>
 	<date>Wed Apr 22 2020</date>
 	<description>
 		Transorts a part vorm it's bin to the selecte agv
@@ -13,6 +13,7 @@
 
 	<!-- Contained Behaviors -->
 	<contains name="transport_part_form_bin_to_agv_state" />
+	<contains name="arm_selector" />
 
 	<!-- Available Parameters -->
 
