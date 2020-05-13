@@ -19,5 +19,35 @@ sensors:
     pose:
       xyz: [1.2, -1.533, 1.6]
       rpy: [3.1413, 1.5676, 1.5676]
+  logical_camera_3:
+    type: logical_camera
+    pose:
+      xyz: [-0.3, 1.92, 1.6]
+      rpy: [3.1413, 1.5676, 1.5676]
+  logical_camera_4:
+    type: logical_camera
+    pose:
+      xyz: [-0.3, 1.15, 1.6]
+      rpy: [3.1413, 1.5676, 1.5676]
+  logical_camera_5:
+    type: logical_camera
+    pose:
+      xyz: [-0.3, 0.38, 1.6]
+      rpy: [3.1413, 1.5676, 1.5676]
+  logical_camera_6:
+    type: logical_camera
+    pose:
+      xyz: [-0.3, -0.38, 1.6]
+      rpy: [3.1413, 1.5676, 1.5676]
+  logical_camera_7:
+    type: logical_camera
+    pose:
+      xyz: [-0.3, -1.15, 1.6]
+      rpy: [3.1413, 1.5676, 1.5676]
+  logical_camera_8:
+    type: logical_camera
+    pose:
+      xyz: [-0.3, -1.92, 1.6]
+      rpy: [3.1413, 1.5676, 1.5676]
 
 
