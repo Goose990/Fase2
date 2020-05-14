@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<behavior name="bewegen_naar_pregrasp">
+
+	<executable package_path="ariac_flexbe_behaviors.bewegen_naar_pregrasp_sm" class="bewegen_naar_pregraspSM" />
+	<tagstring></tagstring>
+	<author>gino</author>
+	<date>Wed May 13 2020</date>
+	<description>
+		identificeert het parttype en gaat naar de juiste pregrasp
+	</description>
+
+
+	<!-- Contained Behaviors -->
+
+	<!-- Available Parameters -->
+
+</behavior>

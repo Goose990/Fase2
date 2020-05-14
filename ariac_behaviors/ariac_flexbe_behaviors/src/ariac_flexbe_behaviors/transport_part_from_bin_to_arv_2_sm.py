@@ -54,14 +54,15 @@ class transport_part_from_bin_to_arv_2SM(Behavior):
 		_state_machine.userdata.shipments = []
 		_state_machine.userdata.order_id = ''
 		_state_machine.userdata.number_of_shipments = 0
-		_state_machine.userdata.shipment_index = 0
+		_state_machine.userdata.shipment_index = 1
 		_state_machine.userdata.shipment_type = ''
 		_state_machine.userdata.agv_id = ''
 		_state_machine.userdata.products = []
 		_state_machine.userdata.number_of_products = 0
-		_state_machine.userdata.product_index = 0
+		_state_machine.userdata.product_index = 1
 		_state_machine.userdata.part_type = ''
 		_state_machine.userdata.part_pose = []
+		_state_machine.userdata.move_group = 'manipulator'
 
 		# Additional creation code can be added inside the following tags
 		# [MANUAL_CREATE]

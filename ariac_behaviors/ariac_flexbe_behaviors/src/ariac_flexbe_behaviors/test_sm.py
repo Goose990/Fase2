@@ -8,13 +8,15 @@
 ###########################################################
 
 from flexbe_core import Behavior, Autonomy, OperatableStateMachine, ConcurrencyContainer, PriorityContainer, Logger
-from ariac_flexbe_states.detect_part_camera_ariac_state import DetectPartCameraAriacState
-from ariac_flexbe_states.srdf_state_to_moveit_ariac_state import SrdfStateToMoveitAriac
+from ariac_flexbe_states.start_assignment_state import StartAssignment
+from ariac_logistics_flexbe_states.get_order_state import GetOrderState
+from ariac_logistics_flexbe_states.get_products_from_shipment_state import GetProductsFromShipmentState
+from ariac_logistics_flexbe_states.get_part_from_products_state import GetPartFromProductsState
+from ariac_support_flexbe_states.add_numeric_state import AddNumericState
+from ariac_support_flexbe_states.equal_state import EqualState
 from ariac_support_flexbe_states.replace_state import ReplaceState
-from ariac_flexbe_states.compute_grasp_ariac_state import ComputeGraspAriacState
-from ariac_flexbe_states.moveit_to_joints_dyn_ariac_state import MoveitToJointsDynAriacState
-from ariac_flexbe_states.vacuum_gripper_state import VacuumGripperControlState
-from flexbe_states.wait_state import WaitState
+from ariac_flexbe_behaviors.notify_shipment_ready_sm import notify_shipment_readySM
+from ariac_flexbe_behaviors.transport_part_form_bin_to_agv_state_sm import transport_part_form_bin_to_agv_stateSM
 # Additional imports can be added inside the following tags
 # [MANUAL_IMPORT]
 
@@ -38,6 +40,8 @@ class testSM(Behavior):
 		# parameters of this behavior
 
 		# references to used behaviors
+		self.add_behavior(notify_shipment_readySM, 'notify_shipment_ready')
+		self.add_behavior(transport_part_form_bin_to_agv_stateSM, 'transport_part_form_bin_to_agv_state')
 
 		# Additional initialization code can be added inside the following tags
 		# [MANUAL_INIT]
@@ -49,28 +53,23 @@ class testSM(Behavior):
 
 
 	def create(self):
-		# x:1592 y:474, x:550 y:380
+		# x:509 y:35, x:204 y:373
 		_state_machine = OperatableStateMachine(outcomes=['finished', 'failed'])
-		_state_machine.userdata.joint_values = []
-		_state_machine.userdata.joint_names = []
-		_state_machine.userdata.move_group = 'manipulator'
-		_state_machine.userdata.action_topic = '/move_group'
-		_state_machine.userdata.robot_name = ''
-		_state_machine.userdata.tool_link = 'ee_link'
-		_state_machine.userdata.config_name_R1BinPre = 'R1Bin1Pre'
-		_state_machine.userdata.config_name_R1AGVPre = 'R1AGVPre'
-		_state_machine.userdata.config_name_R2Bin5Pre = 'R2Bin5Pre'
-		_state_machine.userdata.move_group_prefix = '/ariac/arm1'
-		_state_machine.userdata.arm2 = '/ariac/arm2'
-		_state_machine.userdata.arm_id = 'arm1'
-		_state_machine.userdata.gripper_2 = 'arm2'
-		_state_machine.userdata.camera_ref_frame = 'arm1_linear_arm_actuator'
-		_state_machine.userdata.camera_topic = '/ariac/logical_camera_3'
-		_state_machine.userdata.camera_frame = 'logical_camera_3_frame'
-		_state_machine.userdata.part_offset = 0.035
-		_state_machine.userdata.part_rotation = 0
+		_state_machine.userdata.shipments = []
+		_state_machine.userdata.number_of_shipments = 0
+		_state_machine.userdata.agv_id = ''
+		_state_machine.userdata.number_of_products = 0
+		_state_machine.userdata.shipment_type = ''
+		_state_machine.userdata.products = []
+		_state_machine.userdata.number_of_products = 0
+		_state_machine.userdata.shipment_index = 0
+		_state_machine.userdata.product_index = 0
+		_state_machine.userdata.part_type = ''
+		_state_machine.userdata.one_value = 1
+		_state_machine.userdata.zero_value = 0
+		_state_machine.userdata.order_id = ''
 		_state_machine.userdata.part_pose = []
-		_state_machine.userdata.part = 'gasket_part'
+		_state_machine.userdata.old_order_id = ''
 
 		# Additional creation code can be added inside the following tags
 		# [MANUAL_CREATE]
@@ -79,67 +78,94 @@ class testSM(Behavior):
 
 
 		with _state_machine:
-			# x:10 y:138
-			OperatableStateMachine.add('detect part',
-										DetectPartCameraAriacState(time_out=0.5),
-										transitions={'continue': 'move', 'failed': 'failed', 'not_found': 'failed'},
-										autonomy={'continue': Autonomy.Off, 'failed': Autonomy.Off, 'not_found': Autonomy.Off},
-										remapping={'ref_frame': 'camera_ref_frame', 'camera_topic': 'camera_topic', 'camera_frame': 'camera_frame', 'part': 'part', 'pose': 'part_pose'})
+			# x:65 y:95
+			OperatableStateMachine.add('start',
+										StartAssignment(),
+										transitions={'continue': 'getorder'},
+										autonomy={'continue': Autonomy.Off})
 
-			# x:1539 y:192
-			OperatableStateMachine.add('robot_2_bewegen',
-										SrdfStateToMoveitAriac(),
-										transitions={'reached': 'finished', 'planning_failed': 'finished', 'control_failed': 'finished', 'param_error': 'finished'},
-										autonomy={'reached': Autonomy.Off, 'planning_failed': Autonomy.Off, 'control_failed': Autonomy.Off, 'param_error': Autonomy.Off},
-										remapping={'config_name': 'config_name_R2Bin5Pre', 'move_group': 'move_group', 'move_group_prefix': 'move_group_prefix', 'action_topic': 'action_topic', 'robot_name': 'robot_name', 'config_name_out': 'config_name_out', 'move_group_out': 'move_group_out', 'robot_name_out': 'robot_name_out', 'action_topic_out': 'action_topic_out', 'joint_values': 'joint_values', 'joint_names': 'joint_names'})
+			# x:243 y:92
+			OperatableStateMachine.add('getorder',
+										GetOrderState(),
+										transitions={'continue': 'compare_last_order'},
+										autonomy={'continue': Autonomy.Off},
+										remapping={'order_id': 'order_id', 'shipments': 'shipments', 'number_of_shipments': 'number_of_shipments'})
 
-			# x:1118 y:129
-			OperatableStateMachine.add('move_agv',
-										SrdfStateToMoveitAriac(),
-										transitions={'reached': 'robot_2_selecteren', 'planning_failed': 'failed', 'control_failed': 'robot_2_selecteren', 'param_error': 'failed'},
-										autonomy={'reached': Autonomy.Off, 'planning_failed': Autonomy.Off, 'control_failed': Autonomy.Off, 'param_error': Autonomy.Off},
-										remapping={'config_name': 'config_name_R1AGVPre', 'move_group': 'move_group', 'move_group_prefix': 'move_group_prefix', 'action_topic': 'action_topic', 'robot_name': 'robot_name', 'config_name_out': 'config_name_out', 'move_group_out': 'move_group_out', 'robot_name_out': 'robot_name_out', 'action_topic_out': 'action_topic_out', 'joint_values': 'joint_values', 'joint_names': 'joint_names'})
+			# x:465 y:94
+			OperatableStateMachine.add('get_products_from_shipments',
+										GetProductsFromShipmentState(),
+										transitions={'continue': 'get_part_from_products', 'invalid_index': 'failed'},
+										autonomy={'continue': Autonomy.Off, 'invalid_index': Autonomy.Off},
+										remapping={'shipments': 'shipments', 'index': 'shipment_index', 'shipment_type': 'shipment_type', 'agv_id': 'agv_id', 'products': 'products', 'number_of_products': 'number_of_products'})
 
-			# x:1215 y:307
-			OperatableStateMachine.add('robot_2_selecteren',
-										ReplaceState(),
-										transitions={'done': 'robot_2_bewegen'},
+			# x:689 y:90
+			OperatableStateMachine.add('get_part_from_products',
+										GetPartFromProductsState(),
+										transitions={'continue': 'transport_part_form_bin_to_agv_state', 'invalid_index': 'failed'},
+										autonomy={'continue': Autonomy.Off, 'invalid_index': Autonomy.Off},
+										remapping={'products': 'products', 'index': 'product_index', 'type': 'part_type', 'pose': 'part_pose'})
+
+			# x:986 y:193
+			OperatableStateMachine.add('increment_product_index',
+										AddNumericState(),
+										transitions={'done': 'einde_products'},
 										autonomy={'done': Autonomy.Off},
-										remapping={'value': 'arm2', 'result': 'move_group_prefix'})
+										remapping={'value_a': 'product_index', 'value_b': 'one_value', 'result': 'product_index'})
 
-			# x:334 y:175
-			OperatableStateMachine.add('compute pick',
-										ComputeGraspAriacState(joint_names=['linear_arm_actuator_joint', 'shoulder_pan_joint', 'shoulder_lift_joint', 'elbow_joint', 'wrist_1_joint', 'wrist_2_joint', 'wrist_3_joint']),
-										transitions={'continue': 'R1_oppakken', 'failed': 'failed'},
-										autonomy={'continue': Autonomy.Off, 'failed': Autonomy.Off},
-										remapping={'move_group': 'move_group', 'move_group_prefix': 'move_group_prefix', 'tool_link': 'tool_link', 'pose': 'part_pose', 'offset': 'part_offset', 'rotation': 'part_rotation', 'joint_values': 'joint_values', 'joint_names': 'joint_names'})
+			# x:978 y:283
+			OperatableStateMachine.add('einde_products',
+										EqualState(),
+										transitions={'true': 'reset_product index', 'false': 'get_part_from_products'},
+										autonomy={'true': Autonomy.Off, 'false': Autonomy.Off},
+										remapping={'value_a': 'product_index', 'value_b': 'number_of_products'})
 
-			# x:525 y:160
-			OperatableStateMachine.add('R1_oppakken',
-										MoveitToJointsDynAriacState(),
-										transitions={'reached': 'gripper aan', 'planning_failed': 'failed', 'control_failed': 'gripper aan'},
-										autonomy={'reached': Autonomy.Off, 'planning_failed': Autonomy.Off, 'control_failed': Autonomy.Off},
-										remapping={'move_group_prefix': 'move_group_prefix', 'move_group': 'move_group', 'action_topic': 'action_topic', 'joint_values': 'joint_values', 'joint_names': 'joint_names'})
+			# x:972 y:480
+			OperatableStateMachine.add('increment_shipment_index',
+										AddNumericState(),
+										transitions={'done': 'einde_shipments'},
+										autonomy={'done': Autonomy.Off},
+										remapping={'value_a': 'shipment_index', 'value_b': 'one_value', 'result': 'shipment_index'})
 
-			# x:743 y:210
-			OperatableStateMachine.add('gripper aan',
-										VacuumGripperControlState(enable=True),
-										transitions={'continue': 'wacht', 'failed': 'failed', 'invalid_arm_id': 'failed'},
-										autonomy={'continue': Autonomy.Off, 'failed': Autonomy.Off, 'invalid_arm_id': Autonomy.Off},
-										remapping={'arm_id': 'arm_id'})
+			# x:971 y:579
+			OperatableStateMachine.add('einde_shipments',
+										EqualState(),
+										transitions={'true': 'notify_shipment_ready', 'false': 'get_products_from_shipments'},
+										autonomy={'true': Autonomy.Off, 'false': Autonomy.Off},
+										remapping={'value_a': 'shipment_index', 'value_b': 'number_of_shipments'})
 
-			# x:945 y:153
-			OperatableStateMachine.add('wacht',
-										WaitState(wait_time=1),
-										transitions={'done': 'move_agv'},
-										autonomy={'done': Autonomy.Off})
+			# x:978 y:384
+			OperatableStateMachine.add('reset_product index',
+										ReplaceState(),
+										transitions={'done': 'increment_shipment_index'},
+										autonomy={'done': Autonomy.Off},
+										remapping={'value': 'zero_value', 'result': 'product_index'})
 
-			# x:185 y:59
-			OperatableStateMachine.add('move',
-										SrdfStateToMoveitAriac(),
-										transitions={'reached': 'compute pick', 'planning_failed': 'failed', 'control_failed': 'compute pick', 'param_error': 'failed'},
-										autonomy={'reached': Autonomy.Off, 'planning_failed': Autonomy.Off, 'control_failed': Autonomy.Off, 'param_error': Autonomy.Off},
-										remapping={'config_name': 'config_name_R1BinPre', 'move_group': 'move_group', 'move_group_prefix': 'move_group_prefix', 'action_topic': 'action_topic', 'robot_name': 'robot_name', 'config_name_out': 'config_name_out', 'move_group_out': 'move_group_out', 'robot_name_out': 'robot_name_out', 'action_topic_out': 'action_topic_out', 'joint_values': 'joint_values', 'joint_names': 'joint_names'})
+			# x:572 y:362
+			OperatableStateMachine.add('notify_shipment_ready',
+										self.use_behavior(notify_shipment_readySM, 'notify_shipment_ready'),
+										transitions={'finished': 'get_products_from_shipments', 'failed': 'failed'},
+										autonomy={'finished': Autonomy.Inherit, 'failed': Autonomy.Inherit})
+
+			# x:959 y:86
+			OperatableStateMachine.add('transport_part_form_bin_to_agv_state',
+										self.use_behavior(transport_part_form_bin_to_agv_stateSM, 'transport_part_form_bin_to_agv_state'),
+										transitions={'finished': 'increment_product_index', 'failed': 'failed'},
+										autonomy={'finished': Autonomy.Inherit, 'failed': Autonomy.Inherit},
+										remapping={'part_type': 'part_type', 'agv_id': 'agv_id', 'pose_on_agv': 'part_pose'})
+
+			# x:266 y:2
+			OperatableStateMachine.add('compare_last_order',
+										EqualState(),
+										transitions={'true': 'finished', 'false': 'rememberoldorder'},
+										autonomy={'true': Autonomy.Off, 'false': Autonomy.Off},
+										remapping={'value_a': 'order_id', 'value_b': 'old_order_id'})
+
+			# x:584 y:4
+			OperatableStateMachine.add('rememberoldorder',
+										ReplaceState(),
+										transitions={'done': 'get_products_from_shipments'},
+										autonomy={'done': Autonomy.Off},
+										remapping={'value': 'order_id', 'result': 'old_order_id'})
 
 
 		return _state_machine
